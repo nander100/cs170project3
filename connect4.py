@@ -115,7 +115,6 @@ def get_child_boards(player, board):
             res.append((c, tmp_board))
     return res
 
-
 def evaluate(player, board):
     """
     This is a function to evaluate the advantage of the specific player at the
@@ -192,11 +191,9 @@ def evaluate(player, board):
     penalty = sum([s*w for s, w in zip(adv_score, weights)])
     return reward - penalty
 
-
 def minimax(player, board, depth_limit):
     """
     Minimax algorithm with limited search depth.
-
     Parameters
     ----------
     player: board.PLAYER1 or board.PLAYER2
@@ -205,7 +202,6 @@ def minimax(player, board, depth_limit):
     depth_limit: int
         the tree depth that the search algorithm needs to go further before stopping
     max_player: boolean
-
     Returns
     -------
     placement: int or None
@@ -213,24 +209,66 @@ def minimax(player, board, depth_limit):
         (counted from the most left as 0)
         None to give up the game
     """
-    max_player = player
-    placement = None
-
-### Please finish the code below ##############################################
-###############################################################################
+    max_player = player  # the player that maximizes the value
+    
     def value(player, board, depth_limit):
-        pass
-
+        # check if the game is terminal or depth limit reached
+        if board.terminal() or depth_limit == 0:
+            return evaluate(max_player, board)
+        
+        # if the current player is the maximizer
+        if player == max_player:
+            return max_value(player, board, depth_limit)
+        # if the current player is the minimizer
+        else:
+            return min_value(player, board, depth_limit)
+    
     def max_value(player, board, depth_limit):
-        pass
+        possible_placements = get_child_boards(player, board)
+        if not possible_placements:
+            return evaluate(max_player, board)
+            
+        current_value = -math.inf
+        next_player = board.PLAYER2 if player == board.PLAYER1 else board.PLAYER1
+        
+        for _, child_board in possible_placements:
+            current_value = max(current_value, value(next_player, child_board, depth_limit-1))
+        
+        return current_value
     
     def min_value(player, board, depth_limit):
-        pass
-
+        possible_placements = get_child_boards(player, board)
+        if not possible_placements:
+            return evaluate(max_player, board)
+            
+        current_value = math.inf
+        next_player = board.PLAYER2 if player == board.PLAYER1 else board.PLAYER1
+        
+        for _, child_board in possible_placements:
+            current_value = min(current_value, value(next_player, child_board, depth_limit-1))
+        
+        return current_value
+    
+    # Get all possible moves for the current player
+    possible_placements = get_child_boards(player, board)
+    
+    # If no valid moves, return None
+    if not possible_placements:
+        return None
+    
+    # Determine the next player after current player's move
     next_player = board.PLAYER2 if player == board.PLAYER1 else board.PLAYER1
+    
+    # Find the best move
     score = -math.inf
-
-###############################################################################
+    placement = None
+    
+    for col, child_board in possible_placements:
+        curr_value = value(next_player, child_board, depth_limit-1)
+        if curr_value > score:
+            score = curr_value
+            placement = col
+    
     return placement
 
 
@@ -335,3 +373,4 @@ if __name__ == "__main__":
     root = tkinter.Tk()
     App(algs, root)
     root.mainloop()
+
