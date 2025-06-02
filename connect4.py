@@ -183,7 +183,7 @@ def evaluate(player, board):
     for s in seg:
         if invalid_slot in s:
             continue
-        if adversary not in s:
+        if adversary not in s:  
             score[s.count(player)] += 1
         if player not in s:
             adv_score[s.count(adversary)] += 1
@@ -378,15 +378,17 @@ def expectimax(player, board, depth_limit):
     then, during search, Player 2 is assumed to pick actions uniformly at
     random.
 
-    Expectimax: instead of a minimizer, we have a random player that determines their moves  based of of some probability.
+    Notes from class:
+    Expectimax: instead of a minimizer, we have a random player that determines their moves based of of some probability.
+    
     Replace the min_value function with a function that computes the expected value of the child nodes.
-
+    
     To keep the same behavior as minimax, a transformation needs to be linear.
-
+    
     The expected value of a node is the average of the values of its children.
-
+    
     Tree pruning is not possible in expectimax, as the adversary chooses actions uniformly at random.
-
+    
     Parameters
     ----------
     player: board.PLAYER1 or board.PLAYER2
@@ -395,7 +397,6 @@ def expectimax(player, board, depth_limit):
     depth_limit: int
         the tree depth that the search algorithm needs to go before stopping
     max_player: boolean
-
     Returns
     -------
     placement: int or None
@@ -403,23 +404,62 @@ def expectimax(player, board, depth_limit):
         (counted from the most left as 0)
         None to give up the game
     """
-    max_player = player
-    placement = None
-
-### Please finish the code below ##############################################
-###############################################################################
-    def value(player, board, depth_limit):
-        pass
-
-    def max_value(player, board, depth_limit):
-        pass
+    max_player = player  # the player that maximizes the value
     
-    def min_value(player, board, depth_limit):
-        pass
-
+    def value(player, board, depth_limit):
+        # check if the game is terminal or depth limit reached
+        if board.terminal() or depth_limit == 0:
+            return evaluate(max_player, board)
+        # if the current player is the maximizer
+        if player == max_player:
+            return max_value(player, board, depth_limit)
+        # if the current player is the random player (expectimax node)
+        else:
+            return exp_value(player, board, depth_limit)
+    
+    def max_value(player, board, depth_limit):
+        possible_placements = get_child_boards(player, board)
+        if not possible_placements:
+            return evaluate(max_player, board)
+        current_value = -math.inf
+        next_player = board.PLAYER2 if player == board.PLAYER1 else board.PLAYER1
+        for _, child_board in possible_placements:
+            current_value = max(current_value, value(next_player, child_board, depth_limit-1))
+        return current_value
+    
+    def exp_value(player, board, depth_limit):
+        possible_placements = get_child_boards(player, board)
+        if not possible_placements:
+            return evaluate(max_player, board)
+        # Calculate expected value (average of all possible outcomes)
+        total_value = 0
+        next_player = board.PLAYER2 if player == board.PLAYER1 else board.PLAYER1
+        for _, child_board in possible_placements:
+            total_value += value(next_player, child_board, depth_limit-1)
+        # Return the average (expected value)
+        return total_value / len(possible_placements)
+    
+    # Get all possible moves for the current player
+    possible_placements = get_child_boards(player, board)
+    # If no valid moves, return None
+    if not possible_placements:
+        return None
+    
+    # Determine the next player after current player's move
     next_player = board.PLAYER2 if player == board.PLAYER1 else board.PLAYER1
+    
+    # Find the best move using expectimax
     score = -math.inf
-###############################################################################
+    placement = None
+    
+    for col, child_board in possible_placements:
+        # call with depth_limit-1 because evaluating from next player's perspective
+        curr_value = value(next_player, child_board, depth_limit-1)
+        # if the current value is greater than the score, update the score and placement
+        if curr_value > score:
+            score = curr_value
+            placement = col
+    
     return placement
 
 
